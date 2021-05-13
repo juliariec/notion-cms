@@ -1,5 +1,9 @@
 require("dotenv").config();
+// https://github.com/makenotion/notion-sdk-js
 const { Client } = require("@notionhq/client");
+const fs = require("fs"),
+  path = require("path"),
+  dir = path.join(process.cwd(), "posts");
 
 // Initializes Notion client
 const notion = new Client({
@@ -9,8 +13,8 @@ const notion = new Client({
 main();
 
 async function main() {
-  let posts = getPostsToPublish();
-  for (const post in posts) {
+  let posts = await getPostsToPublish();
+  for (const post of posts) {
     await convertPostToMarkdown(post);
   }
 }
@@ -37,7 +41,7 @@ async function getPostsToPublish() {
   // Pulls relevant properties of the posts
   for (const post of full_posts) {
     posts.push({
-      name: post.properties.Name.title[0].plain_text,
+      title: post.properties.Name.title[0].plain_text,
       id: post.id,
       published: post.last_edited_time,
       description: post.properties.Description.rich_text[0].plain_text,
@@ -58,8 +62,21 @@ async function getPostsToPublish() {
  * @param {Object} post Post to convert to Markdown.
  */
 async function convertPostToMarkdown(post) {
+  let text =
+    `---\ntitle: "${post.title}"\n` +
+    `date: "${post.published.substring(0, 10)}"\n` +
+    `description: "${post.description}"\n` +
+    `tag: "${post.category.toLowerCase()}"\n` +
+    `type: "post"\n---`;
+
   const page_blocks = await notion.blocks.children.list({
     block_id: post.id,
   });
   //console.log(page_blocks);
+
+  const filePath = path.join(dir, `${post.slug}.md`);
+  fs.writeFile(filePath, text, function err() {
+    if (err) return console.log(err);
+    console.log("success");
+  });
 }
