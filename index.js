@@ -37,7 +37,6 @@ setInterval(main, runEveryXMin * 60000);
  * Main function: saves posts from Notion in Markdown, pushes to Github.
  */
 async function main() {
-  console.log("Started.");
   const result = await savePosts();
   let upload = true;
   if (result.success && result.posts.length > 0) {
@@ -57,7 +56,6 @@ async function main() {
   }
 
   if (upload) git.push();
-  console.log(`Ran iteration at ${new Date()}`);
 }
 
 /**
