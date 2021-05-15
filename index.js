@@ -15,8 +15,9 @@ const gitOptions = {
 };
 const git = simpleGit(gitOptions);
 const logFile = fs.createWriteStream(__dirname + "/error.log", { flags: "a" });
+const runEveryXMin = 60;
 
-setTimeout(main, 60 * 60000);
+setTimeout(main, runEveryXMin * 60000);
 
 /**
  * Main function: saves posts from Notion in Markdown, pushes to Github.
