@@ -1,4 +1,4 @@
-# notion-gatsby
+# notion-cms
 Script to use Notion as CMS for Gatsby website.
 
 ## How it works
