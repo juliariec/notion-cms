@@ -13,6 +13,10 @@ Since my Gatsby site is deployed through GitHub and Netlify, the site is then re
 I set the script on a timer and then installed it as a Windows service so that it always runs in the background.
 
 ## Setup and installation
+### Requirements
+Your machine will need Node.js and Git installed and a local Git repository for the blog in question. For more information about Git requirements, see [here](https://www.npmjs.com/package/simple-git).
+
+### Steps
 1. Clone this repository on your local machine and run `npm install` to install all relevant modules.
 2. If you want to use it as a Windows service, also run `npm link node-windows`.
 3. Create an `.env` file with the following variables:
