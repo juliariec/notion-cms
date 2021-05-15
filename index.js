@@ -15,14 +15,29 @@ const gitOptions = {
 };
 const git = simpleGit(gitOptions);
 const logFile = fs.createWriteStream(__dirname + "/error.log", { flags: "a" });
-const runEveryXMin = 60;
 
-setTimeout(main, runEveryXMin * 60000);
+// Settings
+const runEveryXMin = 60;
+const dbFilter = {
+  property: "Status",
+  select: {
+    equals: "Publish",
+  },
+};
+const dbUpdate = {
+  Status: {
+    select: { name: "Published" },
+  },
+};
+
+main();
+setInterval(main, runEveryXMin * 60000);
 
 /**
  * Main function: saves posts from Notion in Markdown, pushes to Github.
  */
 async function main() {
+  console.log("Started.");
   const result = await savePosts();
   let upload = true;
   if (result.success && result.posts.length > 0) {
@@ -42,6 +57,7 @@ async function main() {
   }
 
   if (upload) git.push();
+  console.log(`Ran iteration at ${new Date()}`);
 }
 
 /**
@@ -77,12 +93,7 @@ async function getPostsToPublish() {
   const response = await notion.databases
     .query({
       database_id: process.env.NOTION_DATABASE_ID,
-      filter: {
-        property: "Status",
-        select: {
-          equals: "Publish",
-        },
-      },
+      filter: dbFilter,
     })
     .catch((error) => handleError(error));
   const full_posts = response.results;
@@ -171,7 +182,7 @@ async function createMarkdownFile(post) {
 }
 
 /**
- * Updates the status of the post to "Published".
+ * Updates the status of the post.
  * @param {Object} post  Post to update.
  */
 async function updatePost(post) {
@@ -179,9 +190,7 @@ async function updatePost(post) {
     .update({
       page_id: post.id,
       properties: {
-        Status: {
-          select: { name: "Published" },
-        },
+        dbUpdate,
       },
     })
     .catch((error) => handleError(error));
