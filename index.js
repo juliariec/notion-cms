@@ -22,10 +22,11 @@ savePosts()
       for (post of result.posts) {
         try {
           git
-            .add(path.join(process.env.POSTS_DIRECTORY, post))
-            .then(git.commit(`Posting ${post}`));
+            .add(path.join(process.env.POSTS_DIRECTORY, post.name))
+            .then(git.commit(`Posted ${post.name}`))
+            .then(updatePost(post));
         } catch (error) {
-          console.log(error);
+          handleError(error);
           return false;
         }
       }
@@ -35,7 +36,7 @@ savePosts()
     }
   })
   .then((success) => {
-    //if (success) git.push();
+    if (success) git.push();
   });
 
 /**
@@ -53,13 +54,11 @@ async function savePosts() {
 
     for (const post of posts) {
       let name = await createMarkdownFile(post);
-      await updatePost(post);
-      status.posts.push(name);
+      status.posts.push({ id: post.id, name });
     }
   } catch (error) {
     status.success = false;
-    let date = new Date();
-    logFile.write(util.format(date.toUTCString() + error.stack) + "\n\n");
+    handleError(error);
   }
 
   return status;
@@ -70,15 +69,17 @@ async function savePosts() {
  */
 async function getPostsToPublish() {
   // Pulls the posts in my blog database checked Publish
-  const response = await notion.databases.query({
-    database_id: process.env.NOTION_DATABASE_ID,
-    filter: {
-      property: "Status",
-      select: {
-        equals: "Publish",
+  const response = await notion.databases
+    .query({
+      database_id: process.env.NOTION_DATABASE_ID,
+      filter: {
+        property: "Status",
+        select: {
+          equals: "Publish",
+        },
       },
-    },
-  });
+    })
+    .catch((error) => handleError(error));
   const full_posts = response.results;
 
   let posts = [];
@@ -169,14 +170,16 @@ async function createMarkdownFile(post) {
  * @param {Object} post  Post to update.
  */
 async function updatePost(post) {
-  const response = await notion.pages.update({
-    page_id: post.id,
-    properties: {
-      Status: {
-        select: { name: "Published" },
+  await notion.pages
+    .update({
+      page_id: post.id,
+      properties: {
+        Status: {
+          select: { name: "Published" },
+        },
       },
-    },
-  });
+    })
+    .catch((error) => handleError(error));
 }
 
 /**
@@ -216,4 +219,13 @@ function styledText(obj) {
   }
 
   return content;
+}
+
+/**
+ * Logs error to file.
+ * @param {Error} error Error to log
+ */
+function handleError(error) {
+  let date = new Date();
+  logFile.write(util.format(date.toUTCString() + error.stack) + "\n\n");
 }
