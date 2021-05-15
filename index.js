@@ -16,28 +16,32 @@ const gitOptions = {
 const git = simpleGit(gitOptions);
 const logFile = fs.createWriteStream(__dirname + "/error.log", { flags: "a" });
 
-savePosts()
-  .then((result) => {
-    if (result.success && result.posts.length > 0) {
-      for (post of result.posts) {
-        try {
-          git
-            .add(path.join(process.env.POSTS_DIRECTORY, post.name))
-            .then(git.commit(`Posted ${post.name}`))
-            .then(updatePost(post));
-        } catch (error) {
-          handleError(error);
-          return false;
-        }
+setTimeout(main, 60 * 60000);
+
+/**
+ * Main function: saves posts from Notion in Markdown, pushes to Github.
+ */
+async function main() {
+  const result = await savePosts();
+  let upload = true;
+  if (result.success && result.posts.length > 0) {
+    for (post of result.posts) {
+      try {
+        git
+          .add(path.join(process.env.POSTS_DIRECTORY, post.name))
+          .then(git.commit(`Posted ${post.name}`))
+          .then(updatePost(post));
+      } catch (error) {
+        handleError(error);
+        upload = false;
       }
-      return true;
-    } else {
-      return false;
     }
-  })
-  .then((success) => {
-    if (success) git.push();
-  });
+  } else {
+    upload = false;
+  }
+
+  if (upload) git.push();
+}
 
 /**
  * Saves newly published posts from Notion into post directory for Gatsby site.
