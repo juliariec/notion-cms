@@ -3,18 +3,45 @@ require("dotenv").config();
 const { Client } = require("@notionhq/client");
 const fs = require("fs"),
   util = require("util"),
-  path = require("path");
+  path = require("path"),
+  simpleGit = require("simple-git");
 
-// Initializes Notion client
+// Initializations
 const notion = new Client({
   auth: process.env.NOTION_TOKEN,
 });
+const gitOptions = {
+  baseDir: process.env.BLOG_DIRECTORY,
+};
+const git = simpleGit(gitOptions);
+const logFile = fs.createWriteStream(__dirname + "/error.log", { flags: "a" });
 
-// Registers logFile
-let logFile = fs.createWriteStream(__dirname + "/error.log", { flags: "a" });
+savePosts()
+  .then((result) => {
+    if (result.success && result.posts.length > 0) {
+      for (post of result.posts) {
+        try {
+          git
+            .add(path.join(process.env.POSTS_DIRECTORY, post))
+            .then(git.commit(`Posting ${post}`));
+        } catch (error) {
+          console.log(error);
+          return false;
+        }
+      }
+      return true;
+    } else {
+      return false;
+    }
+  })
+  .then((success) => {
+    //if (success) git.push();
+  });
 
-savePosts();
-
+/**
+ * Saves newly published posts from Notion into post directory for Gatsby site.
+ * @returns Status object with properties: success (bool) and posts (list of post names)
+ */
 async function savePosts() {
   let status = {
     success: true,
@@ -125,7 +152,11 @@ async function createMarkdownFile(post) {
 
   // Write text to file
   let fileName = `${post.slug}.md`;
-  const filePath = path.join(process.env.POSTS_DIRECTORY, fileName);
+  const filePath = path.join(
+    process.env.BLOG_DIRECTORY,
+    process.env.POSTS_DIRECTORY,
+    fileName
+  );
   fs.writeFile(filePath, text, function err(e) {
     if (e) throw e;
   });
