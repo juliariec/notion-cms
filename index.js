@@ -94,7 +94,7 @@ async function getPostsToPublish() {
       filter: dbFilter,
     })
     .catch((error) => handleError(error));
-  const full_posts = response.results;
+  const full_posts = response.results.length > 0 ? response.results : [];
 
   let posts = [];
 
@@ -187,9 +187,7 @@ async function updatePost(post) {
   await notion.pages
     .update({
       page_id: post.id,
-      properties: {
-        dbUpdate,
-      },
+      properties: dbUpdate,
     })
     .catch((error) => handleError(error));
 }
