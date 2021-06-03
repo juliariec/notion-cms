@@ -126,7 +126,7 @@ async function createMarkdownFile(post) {
     `---\ntitle: "${post.title}"\n` +
     `date: "${post.published.substring(0, 10)}"\n` +
     `description: "${post.description}"\n` +
-    `tag: "${post.category.toLowerCase()}"\n` +
+    `category: "${post.category.toLowerCase()}"\n` +
     `type: "post"\n---\n\n`;
 
   const page_blocks = await notion.blocks.children.list({
