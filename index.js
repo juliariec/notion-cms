@@ -94,26 +94,22 @@ async function getPostsToPublish() {
       filter: dbFilter,
     })
     .catch((error) => handleError(error));
-  const full_posts = response.results.length > 0 ? response.results : [];
-
   let posts = [];
+  if (response) {
+    const full_posts = response.results.length > 0 ? response.results : [];
 
-  // Pulls relevant properties of the posts
-  for (const post of full_posts) {
-    posts.push({
-      title: post.properties.Name.title[0].plain_text,
-      id: post.id,
-      published: post.last_edited_time,
-      description: post.properties.Description.rich_text[0].plain_text,
-      slug: post.properties.Slug.rich_text[0].plain_text,
-      category: post.properties.Category.select.name,
-      tags:
-        post.properties.Tags.multi_select.length > 1
-          ? post.properties.Tags.multi_select.map((tag) => tag.name)
-          : [],
-    });
+    // Pulls relevant properties of the posts
+    for (const post of full_posts) {
+      posts.push({
+        title: post.properties.Name.title[0].plain_text,
+        id: post.id,
+        published: post.last_edited_time,
+        description: post.properties.Description.rich_text[0].plain_text,
+        slug: post.properties.Slug.rich_text[0].plain_text,
+        category: post.properties.Category.select.name,
+      });
+    }
   }
-
   return posts;
 }
 
